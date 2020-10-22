@@ -9,10 +9,11 @@ class Sine(torch.nn.Module):
     def __init__(self, w=30):
         super(Sine, self).__init__()
         self._w = w
+        self._first = Sine.__first
         Sine.__first = False
 
     def get(self, size):
-        if self.__first:
+        if self._first:
             return 1 / size
         else:
             return np.sqrt(6 / size) / self._w
@@ -105,14 +106,13 @@ class Layer(torch.nn.Module):
                             raise NotImplementedError('uniform init of %s was not implemented.' % type(active))
                     elif self._initilalizer is not None:
                         raise NotImplementedError('%s init was not implemented.' % self._initilalizer)
-#               if hasattr(layer, 'bias'):
-#                   if layer.bias is None:
-#                       continue
-#
-#                   if self._initilalizer == 'normal':
-#                       torch.nn.init.normal_(layer.bias, mean=0, std=0.01)
-#                   elif self._initilalizer == 'uniform':
-#                       torch.nn.init.uniform_(layer.bias, -0.01, 0.01)
+                # if hasattr(layer, 'bias'):
+                #    if layer.bias is None:
+                #        continue
+                #    if self._initilalizer == 'normal':
+                #        torch.nn.init.normal_(layer.bias, mean=0, std=0.01)
+                #    elif self._initilalizer == 'uniform':
+                #        torch.nn.init.uniform_(layer.bias, -0.01, 0.01)
 
 
 class Linear(Layer):
@@ -125,5 +125,5 @@ class Conv1d(Layer):
     @Layer.init
     def __init__(self, in_channels: int, out_channels: int, kernel_size: int,
                  stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros',
-                 active=None, initilalizer='normal'):
+                 active=None, initilalizer='uniform'):
         pass
