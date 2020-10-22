@@ -67,7 +67,6 @@ class Layer(torch.nn.Module):
                 if hasattr(layer, 'weight'):
                     if layer.weight.dim() < 2:
                         continue
-                    print('init', str(layer))
                     size = layer.weight.size(1)
                     if layer.weight.dim() > 2:
                         size = size * layer.weight[0][0].numel()
