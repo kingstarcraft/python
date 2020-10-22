@@ -105,14 +105,14 @@ class Layer(torch.nn.Module):
                             raise NotImplementedError('uniform init of %s was not implemented.' % type(active))
                     elif self._initilalizer is not None:
                         raise NotImplementedError('%s init was not implemented.' % self._initilalizer)
-                if hasattr(layer, 'bias'):
-                    if layer.bias is None:
-                        continue
-
-                    if self._initilalizer == 'normal':
-                        torch.nn.init.normal_(layer.bias, mean=0, std=0.01)
-                    elif self._initilalizer == 'uniform':
-                        torch.nn.init.uniform_(layer.bias, -0.01, 0.01)
+#               if hasattr(layer, 'bias'):
+#                   if layer.bias is None:
+#                       continue
+#
+#                   if self._initilalizer == 'normal':
+#                       torch.nn.init.normal_(layer.bias, mean=0, std=0.01)
+#                   elif self._initilalizer == 'uniform':
+#                       torch.nn.init.uniform_(layer.bias, -0.01, 0.01)
 
 
 class Linear(Layer):
