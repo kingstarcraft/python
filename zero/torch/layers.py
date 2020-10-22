@@ -1,5 +1,5 @@
 import torch
-import numpy as np
+import zero.torch.init as init
 import zero.function as function
 
 
@@ -12,17 +12,16 @@ class Sine(torch.nn.Module):
         self._first = Sine.__first
         Sine.__first = False
 
-    def get(self, size):
-        if self._first:
-            return 1 / size
-        else:
-            return np.sqrt(6 / size) / self._w
+    def __float__(self):
+        return None if Sine.__first else float(self._w)
 
     def forward(self, inputs):
         return torch.sin(self._w * inputs)
 
 
 class Layer(torch.nn.Module):
+    __init = None
+
     @staticmethod
     def init(func):
 
@@ -66,46 +65,12 @@ class Layer(torch.nn.Module):
         with torch.no_grad():
             for layer in self._core:
                 if hasattr(layer, 'weight'):
-                    if layer.weight.dim() < 2:
-                        continue
-                    size = layer.weight.size(1)
-                    if layer.weight.dim() > 2:
-                        size = size * layer.weight[0][0].numel()
-
                     if self._initilalizer == 'normal':
-                        if active is None or isinstance(active, torch.nn.SELU):
-                            torch.nn.init.normal_(layer.weight, std=1 / np.sqrt(size))
-                        elif isinstance(active, Sine):
-                            torch.nn.init.normal_(layer.weight, 0, active.get(size))
-                        elif isinstance(active, torch.nn.ReLU) or \
-                                isinstance(active, torch.nn.Softplus) or \
-                                isinstance(active, torch.nn.PReLU):
-                            torch.nn.init.kaiming_normal_(layer.weight, a=0.0, nonlinearity='relu', mode='fan_in')
-                        elif isinstance(active, torch.nn.Sigmoid) or isinstance(active, torch.nn.Tanh):
-                            torch.nn.init.xavier_normal_(layer.weight)
-                        elif isinstance(active, torch.nn.ELU):
-                            torch.nn.init.normal_(layer.weight, std=np.sqrt(1.5505188080679277 / size))
-                        else:
-                            raise NotImplementedError('normal init of %s was not implemented.' % type(active))
+                        init.normal(layer.weight, active)
                     elif self._initilalizer == 'uniform':
-                        if active is None or isinstance(active, torch.nn.SELU):
-                            std = 1 / np.sqrt(size)
-                            torch.nn.init.uniform_(layer.weight, -std, std)
-                        elif isinstance(active, Sine):
-                            torch.nn.init.uniform_(layer.weight, -active.get(size), active.get(size))
-                        elif isinstance(active, torch.nn.ReLU) or \
-                                isinstance(active, torch.nn.Softplus) or \
-                                isinstance(active, torch.nn.PReLU):
-                            torch.nn.init.kaiming_uniform_(layer.weight, a=0.0, nonlinearity='relu', mode='fan_in')
-                        elif isinstance(active, torch.nn.Sigmoid) or isinstance(active, torch.nn.Tanh):
-                            torch.nn.init.xavier_uniform_(layer.weight)
-                        elif isinstance(active, torch.nn.ELU):
-                            std = np.sqrt(1.5505188080679277 / size)
-                            torch.nn.init.uniform_(layer.weight, -std, std)
-                        else:
-                            raise NotImplementedError('uniform init of %s was not implemented.' % type(active))
-                    elif self._initilalizer is not None:
-                        raise NotImplementedError('%s init was not implemented.' % self._initilalizer)
+                        init.uniform_(layer.weight, active)
+                    else:
+                        NotImplementedError('%s init was not implemented.' % self._initilalizer)
                 # if hasattr(layer, 'bias'):
                 #    if layer.bias is None:
                 #        continue
