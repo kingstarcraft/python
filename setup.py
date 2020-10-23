@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='zero',
-    version='1.0.1',
+    version='1.0.3',
     description='tool',
     author='xi long',
     author_email='kingstarcraft@foxmail.com',

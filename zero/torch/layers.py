@@ -13,7 +13,7 @@ class Sine(torch.nn.Module):
         Sine.__first = False
 
     def __float__(self):
-        return None if Sine.__first else float(self._w)
+        return 0.0 if self._first else float(self._w)
 
     def forward(self, inputs):
         return torch.sin(self._w * inputs)
