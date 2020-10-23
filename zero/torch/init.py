@@ -21,7 +21,7 @@ class Initilalizer(object):
             return 1 / math.sqrt(size)
         elif isinstance(active, layers.Sine):
             param = float(active)
-            return 1 / size if param is None else math.sqrt(1 / size) / param
+            return 1 / size if param is None else math.sqrt(6 / size) / param
         elif isinstance(active, torch.nn.ReLU) or \
                 isinstance(active, torch.nn.Softplus) or \
                 isinstance(active, torch.nn.PReLU):
