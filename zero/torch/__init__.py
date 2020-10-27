@@ -1,1 +1,1 @@
-from . import init, embebding, layers
+from . import init, embebding, layers, model
