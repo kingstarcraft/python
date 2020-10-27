@@ -68,7 +68,7 @@ class Layer(torch.nn.Module):
                     if self._initilalizer == 'normal':
                         init.normal(layer.weight, active)
                     elif self._initilalizer == 'uniform':
-                        init.uniform_(layer.weight, active)
+                        init.uniform(layer.weight, active)
                     else:
                         NotImplementedError('%s init was not implemented.' % self._initilalizer)
                 # if hasattr(layer, 'bias'):

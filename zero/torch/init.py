@@ -55,9 +55,9 @@ class Initilalizer(object):
             Initilalizer.__func(weight)
 
 
-def normal_(tensor, active):
+def normal(tensor, active):
     Initilalizer.run(tensor, active, type='normal')
 
 
-def uniform_(tensor, active):
+def uniform(tensor, active):
     Initilalizer.run(tensor, active, type='uniform')
