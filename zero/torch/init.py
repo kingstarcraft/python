@@ -1,6 +1,6 @@
 import torch
 import math
-import zero.torch.layers as layers
+import zero.torch.nn as nn
 
 
 class Initilalizer(object):
@@ -17,9 +17,11 @@ class Initilalizer(object):
     @staticmethod
     def __get(weight, active):
         size = Initilalizer.__size(weight)
-        if active is None and isinstance(active, torch.nn.SELU):
+        if active is None:
+            return 0.02
+        elif isinstance(active, torch.nn.SELU):
             return 1 / math.sqrt(size)
-        elif isinstance(active, layers.Sine):
+        elif isinstance(active, nn.Sine):
             param = float(active)
             return 1 / size if param <= 0 else math.sqrt(6 / size) / param
         elif isinstance(active, torch.nn.ReLU) or \
@@ -42,11 +44,11 @@ class Initilalizer(object):
                     tensor, a=0.0, nonlinearity='relu', mode='fan_in')
             else:
                 if type == 'normal':
-                    func = lambda tensor: torch.nn.init.normal_(
-                        tensor, std=param)
+                    func = lambda tensor: torch.nn.init.normal_(tensor, std=param)
                 elif type == 'uniform':
-                    func = lambda tensor: torch.nn.init.uniform_(
-                        tensor, -param, param)
+                    func = lambda tensor: torch.nn.init.uniform_(tensor, -param, param)
+                elif type == 'trunc_normal':
+                    func = lambda tensor: torch.nn.init.trunc_normal_(tensor, std=param, a=-2 * param, b=2 * param)
                 else:
                     raise NotImplementedError('%s init was not implemented.' % type)
             Initilalizer.__func = func
@@ -61,3 +63,7 @@ def normal(tensor, active):
 
 def uniform(tensor, active):
     Initilalizer.run(tensor, active, type='uniform')
+
+
+def trunc_normal(tensor, active):
+    Initilalizer.run(tensor, active, type='trunc_normal')
