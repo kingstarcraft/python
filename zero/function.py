@@ -18,13 +18,12 @@ class Argument(dict):
                 pass
 
 
-
-def func(a, b, c, d=1, e=2, f=4):
-    aa = 1
-    bb = 2
-    return aa, bb
-
-
 if __name__ == '__main__':
+    def func(a, b, c, d=1, e=2, f=4):
+        aa = 1
+        bb = 2
+        return aa, bb
+
+
     test = Argument(func, 1, c=3, d=None, e=3, b=-2)
     print(test)

@@ -142,14 +142,14 @@ class _Reader(_Head):
     def __init__(self, channel, memory):
         super(_Reader, self).__init__(channel, memory)
         self._lengths = self._memory.size()[1], 1, 1, 3, 1
-        self._core = torch.nn.Linear(channel, sum(self._lengths))
+        self._net = torch.nn.Linear(channel, sum(self._lengths))
 
         # ==================================
-        torch.nn.init.xavier_uniform_(self._core.weight, gain=1.4)
-        torch.nn.init.normal_(self._core.bias, std=0.01)
+        torch.nn.init.xavier_uniform_(self._net.weight, gain=1.4)
+        torch.nn.init.normal_(self._net.bias, std=0.01)
 
     def forward(self, features):
-        params = self._core(features)
+        params = self._net(features)
         params = self._split_cols(params, self._lengths)
         weight = self._address(*params)
         data = self._memory.read(weight)
@@ -160,14 +160,14 @@ class _Writer(_Head):
     def __init__(self, channel, memory):
         super(_Writer, self).__init__(channel, memory)
         self._lengths = self._memory.size()[1], 1, 1, 3, 1, self._memory.size()[1], self._memory.size()[1]
-        self._core = torch.nn.Linear(channel, sum(self._lengths))
+        self._net = torch.nn.Linear(channel, sum(self._lengths))
 
         # ==================================
-        torch.nn.init.xavier_uniform_(self._core.weight, gain=1.4)
-        torch.nn.init.normal_(self._core.bias, std=0.01)
+        torch.nn.init.xavier_uniform_(self._net.weight, gain=1.4)
+        torch.nn.init.normal_(self._net.bias, std=0.01)
 
     def forward(self, features):
-        params = self._core(features)
+        params = self._net(features)
         params = self._split_cols(params, self._lengths)
         weight = self._address(*params[:-2])
         erase = torch.sigmoid(params[-2])
@@ -179,14 +179,14 @@ class _Controller(_State):
     def __init__(self, input_size, output_size, num_layers):
         super(_Controller, self).__init__()
         self._size = (input_size, output_size)
-        self._core = torch.nn.LSTM(input_size=self._size[0], hidden_size=self._size[1], num_layers=num_layers)
+        self._net = torch.nn.LSTM(input_size=self._size[0], hidden_size=self._size[1], num_layers=num_layers)
         # self._seed = torch.nn.Parameter(torch.zeros(2, num_layers, 1, self._size[1]))
 
         # ==================================
         self._seed1 = torch.nn.Parameter(torch.randn(num_layers, 1, self._size[1]) * 0.05)
         self._seed2 = torch.nn.Parameter(torch.randn(num_layers, 1, self._size[1]) * 0.05)
 
-        for p in self._core.parameters():
+        for p in self._net.parameters():
             if p.dim() == 1:
                 torch.nn.init.constant_(p, 0)
             else:
@@ -201,7 +201,7 @@ class _Controller(_State):
             inputs = inputs.unsqueeze(0)
         else:
             assert inputs.size(0) == 1
-        outputs, state = self._core(inputs, self._state)
+        outputs, state = self._net(inputs, self._state)
         self._state = state
         return outputs.squeeze(0)
 
@@ -228,14 +228,14 @@ class NTM(_State):
 
             # ==================================
             self._seed[i, :] = torch.randn(1, memory_size[-1]) * 0.01
-        core = [torch.nn.Linear(hidden_size + num_headers * memory_size[1], output_size)]
+        net = [torch.nn.Linear(hidden_size + num_headers * memory_size[1], output_size)]
         if active is not None:
-            core.append(active)
+            net.append(active)
 
-        self._core = torch.nn.Sequential(*core)
+        self._net = torch.nn.Sequential(*net)
         # ==================================
-        torch.nn.init.xavier_uniform_(core[0].weight, gain=1)
-        torch.nn.init.normal_(core[0].bias, std=0.01)
+        torch.nn.init.xavier_uniform_(net[0].weight, gain=1)
+        torch.nn.init.normal_(net[0].bias, std=0.01)
 
     def reset(self, batch_size):
         self._state = [s.clone().repeat(batch_size, 1) for s in self._seed]
@@ -261,7 +261,7 @@ class NTM(_State):
                 state.append(data)
         outputs = torch.cat([control] + state, dim=1)
         self._state = state
-        return self._core(outputs)
+        return self._net(outputs)
 
     def forward(self, inputs):
         outputs = []

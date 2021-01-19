@@ -7,7 +7,7 @@ class Initilalizer(object):
     __func = None
 
     @staticmethod
-    def __size(weight):
+    def _size(weight):
         assert weight.dim() >= 2
         size = weight.size(1)
         if weight.dim() > 2:
@@ -15,8 +15,8 @@ class Initilalizer(object):
         return size
 
     @staticmethod
-    def __get(weight, active):
-        size = Initilalizer.__size(weight)
+    def _get(weight, active):
+        size = Initilalizer._size(weight)
         if active is None:
             return 0.02
         elif isinstance(active, torch.nn.SELU):
@@ -38,10 +38,10 @@ class Initilalizer(object):
     @staticmethod
     def run(weight, active, type='normal'):
         if active is not None or Initilalizer.__func is None:
-            param = Initilalizer.__get(weight, active)
+            param = Initilalizer._get(weight, active)
             if isinstance(param, str):
                 func = lambda tensor: eval('torch.nn.init.%s_%s_' % (param, type))(
-                    tensor, a=0.0, nonlinearity='relu', mode='fan_in')
+                    tensor, a=math.sqrt(5))
             else:
                 if type == 'normal':
                     func = lambda tensor: torch.nn.init.normal_(tensor, std=param)
