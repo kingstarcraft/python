@@ -1,6 +1,6 @@
 import torch
 import math
-import zero.torch.nn as nn
+from . import nn
 
 
 class Initilalizer(object):
