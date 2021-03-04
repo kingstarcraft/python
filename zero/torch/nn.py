@@ -117,3 +117,16 @@ class ConvTranspose2d(Layer):
                  stride=1, padding=0, output_padding=0, groups=1, bias=True, dilation=1, padding_mode='zeros',
                  normalizer=None, active=None, initilalizer='uniform'):
         pass
+
+
+class Dense(Layer):
+    def __init__(self, in_features: int, out_features: int,
+                 bias=True, normalizer=None, active=None, initilalizer='uniform'):
+        super(Dense, self).__init__(initilalizer)
+        active = util.instance(active)
+        self._net = torch.nn.Sequential(
+            *([torch.nn.Conv1d(in_features, out_features, 1, bias=bias)] +
+              ([] if normalizer is None else [normalizer]) +
+              ([] if active is None else [active]))
+        )
+        self._init(active)
