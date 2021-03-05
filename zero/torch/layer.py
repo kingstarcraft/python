@@ -105,8 +105,8 @@ class Transformer(torch.nn.Module):
         if isinstance(out_channels, int):
             out_channels = (1, out_channels)
         assert len(out_channels) == 2
-        self._attention = torch.nn.Sequential(
-            Attention(in_channels, out_channels, query, key, value, attention_dropout, normalizer),
+        self._attention = Attention(in_channels, out_channels, query, key, value, attention_dropout, normalizer)
+        self._dense = torch.nn.Sequential(
             zero.torch.nn.Dense(out_channels[0] * out_channels[1], out_channels[1], normalizer=normalizer),
             torch.nn.Dropout(block_dropout)
         )
@@ -118,8 +118,8 @@ class Transformer(torch.nn.Module):
         ))
         self._layer_norm = zero.torch.nn.LayerNorm(out_channels[1])
 
-    def forward(self, inputs):
-        attention = self._attention(inputs)
+    def forward(self, inputs, mask=None):
+        attention = self._dense(self._attention(inputs, mask=mask))
         if isinstance(inputs, tuple) or isinstance(inputs, list):
             attention = attention + inputs[0]
         else:
