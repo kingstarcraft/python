@@ -17,7 +17,7 @@ class Initilalizer(object):
     @staticmethod
     def _get(weight, active):
         size = Initilalizer._size(weight)
-        if active is None:
+        if active is None or isinstance(active, torch.nn.GELU):
             return 0.02
         elif isinstance(active, torch.nn.SELU):
             return 1 / math.sqrt(size)

@@ -119,14 +119,37 @@ class ConvTranspose2d(Layer):
         pass
 
 
-class Dense(Layer):
+class Module(torch.nn.Module):
+    def __init__(self):
+        super(Module, self).__init__()
+
+    def forward(self, inputs):
+        assert hasattr(self, '_net')
+        return self._net(inputs)
+
+
+class Axis(torch.nn.Module):
+    def __init__(self, net, axis):
+        super(Axis, self).__init__()
+        if isinstance(net, list) or isinstance(net, tuple):
+            self._net = torch.nn.Sequential(*net)
+        else:
+            self._net = net
+        self._axis = axis
+
+    def forward(self, inputs):
+        net = self._net(torch.movedim(inputs, self._axis, -1))
+        return torch.movedim(net, -1, self._axis)
+
+
+class Dense(Module):
     def __init__(self, in_features: int, out_features: int,
                  bias=True, normalizer=None, active=None, initilalizer='uniform'):
-        super(Dense, self).__init__(initilalizer)
-        active = util.instance(active)
-        self._net = torch.nn.Sequential(
-            *([torch.nn.Conv1d(in_features, out_features, 1, bias=bias)] +
-              ([] if normalizer is None else [normalizer]) +
-              ([] if active is None else [active]))
-        )
-        self._init(active)
+        super(Dense, self).__init__()
+        self._net = Axis(Linear(in_features, out_features, bias, normalizer, active, initilalizer), 1)
+
+
+class LayerNorm(Module):
+    def __init__(self, channels, axis=1):
+        super(LayerNorm, self).__init__()
+        self._net = Axis(torch.nn.LayerNorm(channels), axis=axis)

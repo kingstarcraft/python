@@ -19,9 +19,9 @@ class ResidualBlock(torch.nn.Module):
         self._active = active
         self._net = torch.nn.Sequential(*net)
 
-    def forward(self, x):
-        y = x + self._net(x)
-        return y if self._active is None else self._active(y)
+    def forward(self, inputs):
+        outputs = inputs + self._net(inputs)
+        return outputs if self._active is None else self._active(outputs)
 
 
 class Attention(torch.nn.Module):
@@ -29,8 +29,7 @@ class Attention(torch.nn.Module):
     """
 
     def __init__(self, in_channels, out_channels,
-                 query=None, key=None, value=None,
-                 dropout=0.0):
+                 query=None, key=None, value=None, dropout=0.0, normalizer='trunc_normal'):
         '''
         :param in_channels: a tuple with from_tensor channel an to_tensor channel
         :param out_channels:  a tuple of header_size and header_channels
@@ -49,11 +48,11 @@ class Attention(torch.nn.Module):
         assert len(out_channels) == 2
 
         self._query = zero.torch.nn.Dense(in_channels[0], out_channels[0] * out_channels[1],
-                                          active=query, initilalizer='trunc_normal')
+                                          active=query, initilalizer=normalizer)
         self._key = zero.torch.nn.Dense(in_channels[1], out_channels[0] * out_channels[1],
-                                        active=key, initilalizer='trunc_normal')
+                                        active=key, initilalizer=normalizer)
         self._value = zero.torch.nn.Dense(in_channels[1], out_channels[0] * out_channels[1],
-                                          active=value, initilalizer='trunc_normal')
+                                          active=value, initilalizer=normalizer)
         self._shape = out_channels
         self._alpha = 1 / math.sqrt(out_channels[1])
         self._probs = torch.nn.Sequential(
@@ -63,9 +62,9 @@ class Attention(torch.nn.Module):
 
     def forward(self, inputs, mask=None):
         '''
-        :param inputs: a tuple of from_tensor and to_tensor with the shape with [B, C, ...])
-        :param attention_mask: a tensor with shape [..., F, T],  the values should be 1 or 0.
-        :return a tensor with shape [B, N*H, ...]:
+        :param inputs: a tuple of from_tensor and to_tensor with the shape with [B, C, F...] and  [B, C, T...])
+        :param attention_mask: a tensor with shape [B, F, T],  the values should be 1 or 0.
+        :return a tensor with shape [B, N*H, F...]:
         '''
         if not (isinstance(inputs, list) or isinstance(inputs, tuple)):
             inputs = inputs, inputs
@@ -81,14 +80,14 @@ class Attention(torch.nn.Module):
         value = self._value(inputs[1])  # [B, N*H, T]
 
         query = torch.reshape(query, (from_tensor_shape[0], *self._shape, *from_tensor_shape[2:]))  # [B, N, H, F]
-        key = torch.reshape(key, (to_tensor_shape[0], *self._shape[::-1], *to_tensor_shape[2:]))  # [B, N, H, T]
+        key = torch.reshape(key, (to_tensor_shape[0], *self._shape, *to_tensor_shape[2:]))  # [B, N, H, T]
         value = torch.reshape(value, (to_tensor_shape[0], *self._shape, *to_tensor_shape[2:]))  # [B, N, H, T]
 
         # [B, N, F, H] * [B, N, H, T]
         score = torch.transpose(query, 2, 3) @ key * self._alpha  # [B, N, F, T]
 
         if mask is not None:
-            mask = torch.unsqueeze(mask, 1)
+            mask = torch.unsqueeze(mask, 1)  # [B, 1, F, T]
             adder = (1 - mask) * (-1e5)
             score += adder
 
@@ -96,6 +95,36 @@ class Attention(torch.nn.Module):
         context = probs @ torch.transpose(value, 2, 3)  # [B, N, F, T] * [B, N, T, H]
         context = torch.transpose(context, 2, 3)  # [B, N, H, F]
         return torch.reshape(context, shape)  # [B, N * H, ...]
+
+
+class Transformer(torch.nn.Module):
+    def __init__(self, in_channels, out_channels, hidden_channels=3072,
+                 query=None, key=None, value=None, intermediate=torch.nn.GELU,
+                 attention_dropout=0.1, block_dropout=0.1, normalizer='trunc_normal'):
+        super(Transformer, self).__init__()
+        if isinstance(out_channels, int):
+            out_channels = (1, out_channels)
+        assert len(out_channels) == 2
+        self._attention = torch.nn.Sequential(
+            Attention(in_channels, out_channels, query, key, value, attention_dropout, normalizer),
+            zero.torch.nn.Dense(out_channels[0] * out_channels[1], out_channels[1], normalizer=normalizer),
+            torch.nn.Dropout(block_dropout)
+        )
+        self._intermediate = zero.torch.nn.Axis((
+            torch.nn.LayerNorm(out_channels[1]),
+            zero.torch.nn.Linear(out_channels[1], hidden_channels, active=intermediate, normalizer=normalizer),
+            zero.torch.nn.Linear(hidden_channels, out_channels[1], normalizer=normalizer),
+            torch.nn.Dropout(block_dropout)
+        ))
+        self._layer_norm = zero.torch.nn.LayerNorm(out_channels[1])
+
+    def forward(self, inputs):
+        attention = self._attention(inputs)
+        if isinstance(inputs, tuple) or isinstance(inputs, list):
+            attention = attention + inputs[0]
+        else:
+            attention = attention + inputs
+        return self._layer_norm(attention + self._intermediate(attention))
 
 
 class PositionEmbeding(torch.nn.Module):
