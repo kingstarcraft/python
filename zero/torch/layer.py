@@ -42,7 +42,7 @@ class Attention(torch.nn.Module):
         super(Attention, self).__init__()
         if isinstance(in_channels, int):
             in_channels = (in_channels, in_channels)
-        if isinstance(out_channels):
+        if isinstance(out_channels, int):
             out_channels = (1, out_channels)
         assert len(in_channels) == 2
         assert len(out_channels) == 2
@@ -98,25 +98,22 @@ class Attention(torch.nn.Module):
 
 
 class Transformer(torch.nn.Module):
-    def __init__(self, in_channels, out_channels, hidden_channels=3072,
+    def __init__(self, channels, headers=12, hidden_channels=3072,
                  query=None, key=None, value=None, intermediate=torch.nn.GELU,
                  attention_dropout=0.1, block_dropout=0.1, normalizer='trunc_normal'):
         super(Transformer, self).__init__()
-        if isinstance(out_channels, int):
-            out_channels = (1, out_channels)
-        assert len(out_channels) == 2
-        self._attention = Attention(in_channels, out_channels, query, key, value, attention_dropout, normalizer)
+        self._attention = Attention(channels, (headers, channels), query, key, value, attention_dropout, normalizer)
         self._dense = torch.nn.Sequential(
-            zero.torch.nn.Dense(out_channels[0] * out_channels[1], out_channels[1], normalizer=normalizer),
+            zero.torch.nn.Dense(headers * channels, channels, normalizer=normalizer),
             torch.nn.Dropout(block_dropout)
         )
         self._intermediate = zero.torch.nn.Axis((
-            torch.nn.LayerNorm(out_channels[1]),
-            zero.torch.nn.Linear(out_channels[1], hidden_channels, active=intermediate, normalizer=normalizer),
-            zero.torch.nn.Linear(hidden_channels, out_channels[1], normalizer=normalizer),
+            torch.nn.LayerNorm(channels),
+            zero.torch.nn.Linear(channels, hidden_channels, active=intermediate, normalizer=normalizer),
+            zero.torch.nn.Linear(hidden_channels, channels, normalizer=normalizer),
             torch.nn.Dropout(block_dropout)
         ))
-        self._layer_norm = zero.torch.nn.LayerNorm(out_channels[1])
+        self._layer_norm = zero.torch.nn.LayerNorm(channels)
 
     def forward(self, inputs, mask=None):
         attention = self._dense(self._attention(inputs, mask=mask))
