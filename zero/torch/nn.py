@@ -60,7 +60,7 @@ class Layer(torch.nn.Module):
                     if hasattr(layer, 'weight'):
                         torch.nn.init.ones_(layer.weight)
 
-                if hasattr(layer, 'weight'):
+                elif hasattr(layer, 'weight'):
                     init.Initilalizer.run(layer.weight, active, self._initilalizer)
                     if hasattr(layer, 'bias'):
                         if layer.bias is None:
@@ -129,7 +129,7 @@ class Module(torch.nn.Module):
 
 
 class Axis(torch.nn.Module):
-    def __init__(self, net, axis):
+    def __init__(self, net, axis=1):
         super(Axis, self).__init__()
         if isinstance(net, list) or isinstance(net, tuple):
             self._net = torch.nn.Sequential(*net)
