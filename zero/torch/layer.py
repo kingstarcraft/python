@@ -42,7 +42,7 @@ class Attention(torch.nn.Module):
         super(Attention, self).__init__()
         if isinstance(in_channels, int):
             in_channels = (in_channels, in_channels)
-        if isinstance(out_channels):
+        if isinstance(out_channels, int):
             out_channels = (1, out_channels)
         assert len(in_channels) == 2
         assert len(out_channels) == 2
