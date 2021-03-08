@@ -29,7 +29,7 @@ class Attention(torch.nn.Module):
     """
 
     def __init__(self, in_channels, out_channels,
-                 query=None, key=None, value=None, dropout=0.0, normalizer='trunc_normal'):
+                 query=None, key=None, value=None, dropout=0.0, initilalizer='trunc_normal'):
         '''
         :param in_channels: a tuple with from_tensor channel an to_tensor channel
         :param out_channels:  a tuple of header_size and header_channels
@@ -48,11 +48,11 @@ class Attention(torch.nn.Module):
         assert len(out_channels) == 2
 
         self._query = zero.torch.nn.Dense(in_channels[0], out_channels[0] * out_channels[1],
-                                          active=query, initilalizer=normalizer)
+                                          active=query, initilalizer=initilalizer)
         self._key = zero.torch.nn.Dense(in_channels[1], out_channels[0] * out_channels[1],
-                                        active=key, initilalizer=normalizer)
+                                        active=key, initilalizer=initilalizer)
         self._value = zero.torch.nn.Dense(in_channels[1], out_channels[0] * out_channels[1],
-                                          active=value, initilalizer=normalizer)
+                                          active=value, initilalizer=initilalizer)
         self._shape = out_channels
         self._alpha = 1 / math.sqrt(out_channels[1])
         self._probs = torch.nn.Sequential(
@@ -68,7 +68,7 @@ class Attention(torch.nn.Module):
         '''
         if isinstance(inputs, torch.Tensor):
             inputs = inputs, inputs
-        shape = (inputs[0].shape[0], -1, inputs[0].shape[2:])
+        shape = (inputs[0].shape[0], -1, *inputs[0].shape[2:])
         inputs = [torch.reshape(_, (*_.shape[0:2], -1)) for _ in inputs]
 
         from_tensor_shape = inputs[0].shape  # [B, Cf, F]
@@ -99,7 +99,7 @@ class Attention(torch.nn.Module):
 class Transformer(torch.nn.Module):
     def __init__(self, channels, attention_headers=12, attention_channels=256, feed_channels=3072,
                  query=None, key=None, value=None, intermediate=torch.nn.GELU,
-                 attention_dropout=0.1, block_dropout=0.1, normalizer='trunc_normal'):
+                 attention_dropout=0.1, block_dropout=0.1, initilalizer='trunc_normal'):
         '''
         :param channels: a tuple of channels of from_tensor and to_tensor
         :param attention_channels:
@@ -110,7 +110,7 @@ class Transformer(torch.nn.Module):
         :param intermediate:
         :param attention_dropout:
         :param block_dropout:
-        :param normalizer:
+        :param initilalizer:
         '''
 
         super(Transformer, self).__init__()
@@ -119,15 +119,15 @@ class Transformer(torch.nn.Module):
         else:
             from_channels, to_channels = channels
         self._attention = Attention(channels, (attention_headers, attention_channels), query, key, value, attention_dropout,
-                                    normalizer)
+                                    initilalizer)
         self._dense = torch.nn.Sequential(
-            zero.torch.nn.Dense(attention_headers * attention_channels, from_channels, normalizer=normalizer),
+            zero.torch.nn.Dense(attention_headers * attention_channels, from_channels, normalizer=initilalizer),
             torch.nn.Dropout(block_dropout)
         )
         self._attention_norm = zero.torch.nn.LayerNorm(from_channels)
         self._intermediate = zero.torch.nn.Axis((
-            zero.torch.nn.Linear(from_channels, feed_channels, active=intermediate, normalizer=normalizer),
-            zero.torch.nn.Linear(feed_channels, from_channels, normalizer=normalizer),
+            zero.torch.nn.Linear(from_channels, feed_channels, active=intermediate, normalizer=initilalizer),
+            zero.torch.nn.Linear(feed_channels, from_channels, normalizer=initilalizer),
             torch.nn.Dropout(block_dropout)
         ))
         self._block_norm = zero.torch.nn.LayerNorm(from_channels)
