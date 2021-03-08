@@ -121,13 +121,13 @@ class Transformer(torch.nn.Module):
         self._attention = Attention(channels, (attention_headers, attention_channels), query, key, value, attention_dropout,
                                     initilalizer)
         self._dense = torch.nn.Sequential(
-            zero.torch.nn.Dense(attention_headers * attention_channels, from_channels, normalizer=initilalizer),
+            zero.torch.nn.Dense(attention_headers * attention_channels, from_channels, initilalizer=initilalizer),
             torch.nn.Dropout(block_dropout)
         )
         self._attention_norm = zero.torch.nn.LayerNorm(from_channels)
         self._intermediate = zero.torch.nn.Axis((
-            zero.torch.nn.Linear(from_channels, feed_channels, active=intermediate, normalizer=initilalizer),
-            zero.torch.nn.Linear(feed_channels, from_channels, normalizer=initilalizer),
+            zero.torch.nn.Linear(from_channels, feed_channels, active=intermediate, initilalizer=initilalizer),
+            zero.torch.nn.Linear(feed_channels, from_channels, initilalizer=initilalizer),
             torch.nn.Dropout(block_dropout)
         ))
         self._block_norm = zero.torch.nn.LayerNorm(from_channels)
