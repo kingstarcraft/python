@@ -26,7 +26,8 @@ class Initilalizer(object):
             return 1 / size if param <= 0 else math.sqrt(6 / size) / param
         elif isinstance(active, torch.nn.ReLU) or \
                 isinstance(active, torch.nn.Softplus) or \
-                isinstance(active, torch.nn.PReLU):
+                isinstance(active, torch.nn.PReLU) or \
+                isinstance(active, torch.nn.LeakyReLU):
             return 'kaiming'
         elif isinstance(active, torch.nn.Sigmoid) or isinstance(active, torch.nn.Tanh):
             return 'xavier'
