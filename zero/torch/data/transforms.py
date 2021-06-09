@@ -70,6 +70,7 @@ class Transform(torch.nn.Module):
     def _sample(self, batch_size):
         return None
 
+    @torch.no_grad()
     def __call__(self, images, boxes=None):
         '''
         :param image: a list of image tensor or a tensor with shape [B, H, W, C]
