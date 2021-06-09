@@ -32,7 +32,8 @@ filp = transforms.RandomFilp('vertical')
 gaussian = transforms.GaussianNoise()
 blur = transforms.Blur()
 normlizer = transforms.ReinhardNormalBGR(
-    ((2, 4, 5), (1, 3, 4)), ((3, 2, 1), (4, 3, 1))
+    ((2, 4, 5), (1, 3, 4)), ((3, 2, 1), (4, 3, 1)),
+    probability=1
 )
 from zero.torch.data import conversion
 cv2.imshow("src", draw_box(src_image, src_boxes))
@@ -46,9 +47,8 @@ while True:
     dst_images, dst_boxes = func([torch.Tensor(src_image)], [torch.Tensor(src_boxes)])
     print(time.time() - start)
 
-    with torch.no_grad():
-        src = [torch.Tensor(np.arange(0, 60).reshape(5, 4, 3).astype('float32'))]
-        dst = np.clip(normlizer(src)[0][0].cpu().numpy(), 0, 255).astype('uint8')
-        print(dst)
+    src = [torch.Tensor(np.arange(0, 60).reshape(5, 4, 3).astype('float32'))]
+    dst = np.clip(normlizer(src)[0][0].cpu().numpy(), 0, 255).astype('uint8')
+    print(dst)
     cv2.imshow("dst.png", draw_box(dst_images[0], dst_boxes[0]))
     cv2.waitKey()
