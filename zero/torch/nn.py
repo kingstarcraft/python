@@ -16,7 +16,7 @@ class Layer(torch.nn.Module):
             arguments = {}
             if func.__code__.co_argcount > 1:
                 argument = function.Argument(func, *args, **kwargs)
-                for name in func.__code__.co_varnames[1:]:
+                for name in func.__code__.co_varnames[1:func.__code__.co_argcount]:
                     arguments[name] = argument[name]
             return cls(**arguments)
 
