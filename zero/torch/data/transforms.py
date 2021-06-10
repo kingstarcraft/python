@@ -15,8 +15,8 @@ def _sort_boxes(boxes):
 class _Distribution(torch.nn.Module):
     def __init__(self, mean, std):
         super(_Distribution, self).__init__()
-        self._mean = torch.Tensor(mean)
-        self._std = torch.Tensor(std)
+        self._mean = None if mean is None else torch.Tensor(mean)
+        self._std = None if std is None else torch.Tensor(std)
 
 
 class Normalize(_Distribution):
@@ -24,7 +24,10 @@ class Normalize(_Distribution):
         super(Normalize, self).__init__(mean, std)
 
     def __call__(self, inputs):
-        return (inputs - self._mean) / self._std
+        data = torch.reshape(inputs, [-1, inputs.shape[-1]])
+        mean = torch.mean(data, dim=0) if self._mean is None else self._mean
+        std = torch.std(data, dim=0) if self._std is None else self._std
+        return (inputs - mean) / std
 
 
 class Denormalize(_Distribution):
