@@ -1,7 +1,6 @@
 import random
 import torch
 from torchvision import transforms
-from . import conversion
 
 
 def _sort_boxes(boxes):
@@ -10,32 +9,6 @@ def _sort_boxes(boxes):
     boxes[..., 1:3] = min_xy
     boxes[..., 3:5] = max_xy
     return boxes
-
-
-class _Distribution(torch.nn.Module):
-    def __init__(self, mean, std):
-        super(_Distribution, self).__init__()
-        self._mean = None if mean is None else torch.Tensor(mean)
-        self._std = None if std is None else torch.Tensor(std)
-
-
-class Normalize(_Distribution):
-    def __init__(self, mean, std):
-        super(Normalize, self).__init__(mean, std)
-
-    def __call__(self, inputs):
-        data = torch.reshape(inputs, [-1, inputs.shape[-1]])
-        mean = torch.mean(data, dim=0) if self._mean is None else self._mean
-        std = torch.std(data, dim=0) if self._std is None else self._std
-        return (inputs - mean) / std
-
-
-class Denormalize(_Distribution):
-    def __init__(self, mean, std):
-        super(Denormalize, self).__init__(mean, std)
-
-    def __call__(self, inputs):
-        return inputs * self._std + self._mean
 
 
 class Transform(torch.nn.Module):
@@ -200,35 +173,3 @@ class Blur(ChoicesTransform):
         if param == 0:
             return torch.clone(input)
         return self._core[str(param)](input)
-
-
-class _ReinhardNormal(ChoicesTransform):
-    def __init__(self, probability=None):
-        super(_ReinhardNormal, self).__init__((0, 1), probability)
-
-    def _transform_images(self, input, param):
-        if param == 0:
-            return torch.clone(input)
-        return self._net(input)
-
-
-class ReinhardNormalRGB(_ReinhardNormal):
-    def __init__(self, src, dst, probability):
-        super(ReinhardNormalRGB, self).__init__(probability)
-        self._net = torch.nn.Sequential(
-            conversion.RGB2LAB(),
-            Normalize(src[0], src[1]),
-            Denormalize(dst[0], dst[1]),
-            conversion.LAB2RGB()
-        )
-
-
-class ReinhardNormalBGR(_ReinhardNormal):
-    def __init__(self, src, dst, probability):
-        super(ReinhardNormalBGR, self).__init__(probability)
-        self._net = torch.nn.Sequential(
-            conversion.BGR2LAB(),
-            Normalize(src[0], src[1]),
-            Denormalize(dst[0], dst[1]),
-            conversion.LAB2BGR()
-        )
