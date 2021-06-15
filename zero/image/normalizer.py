@@ -26,10 +26,10 @@ class ReinhardNormal:
 
 
 class ReinhardNormalBGR(ReinhardNormal):
-    def __init__(self):
-        super(ReinhardNormalBGR, self).__init__(conversion.BGR2LAB(), conversion.LAB2BGR())
+    def __init__(self, target=None):
+        super(ReinhardNormalBGR, self).__init__(conversion.BGR2LAB(), conversion.LAB2BGR(), target)
 
 
 class ReinhardNormalRGB(ReinhardNormal):
-    def __init__(self):
-        super(ReinhardNormalRGB, self).__init__(conversion.RGB2LAB(), conversion.LAB2RGB())
+    def __init__(self, target=None):
+        super(ReinhardNormalRGB, self).__init__(conversion.RGB2LAB(), conversion.LAB2RGB(), target)
