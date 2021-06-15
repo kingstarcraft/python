@@ -1,6 +1,6 @@
 import torch
 
-import zero.torch.data.transforms as transforms
+from zero.torch.data import conversion, normalizer, transforms
 import numpy as np
 import cv2
 
@@ -31,24 +31,28 @@ rotate = transforms.RandomRotate()
 filp = transforms.RandomFilp('vertical')
 gaussian = transforms.GaussianNoise()
 blur = transforms.Blur()
-normlizer = transforms.ReinhardNormalBGR(
+torch_normlizer = normalizer.ReinhardNormalBGR(
     ((2, 4, 5), (1, 3, 4)), ((3, 2, 1), (4, 3, 1)),
-    probability=1
 )
-from zero.torch.data import conversion
+import zero.image.normalizer as norm
+
+numpy_normalizer = norm.ReinhardNormalBGR()
+
 cv2.imshow("src", draw_box(src_image, src_boxes))
 
 func = blur
 import time
-a = conversion.BGR2LAB()
+
 while True:
     # list of numpy
     start = time.time()
     dst_images, dst_boxes = func([torch.Tensor(src_image)], [torch.Tensor(src_boxes)])
     print(time.time() - start)
 
-    src = [torch.Tensor(np.arange(0, 60).reshape(5, 4, 3).astype('float32'))]
-    dst = np.clip(normlizer(src)[0][0].cpu().numpy(), 0, 255).astype('uint8')
+    src_numpy = np.arange(0, 60).reshape(5, 4, 3).astype('float32')
+    dst_numpy = np.clip(numpy_normalizer(src_numpy, ((3, 2, 1), (4, 3, 1)), ((2, 4, 5), (1, 3, 4))), 0, 255).astype('uint8')
+    src_tensor = torch.Tensor(src_numpy)
+    dst = np.clip(torch_normlizer(src_tensor).cpu().numpy(), 0, 255).astype('uint8')
     print(dst)
     cv2.imshow("dst.png", draw_box(dst_images[0], dst_boxes[0]))
     cv2.waitKey()
