@@ -11,7 +11,7 @@ class ReinhardNormal:
     def __call__(self, inputs, dst=None, src=None, offset=None):
         if src is None:
             shape = inputs.shape
-            temps = np.reshape([-1, shape[-1]])
+            temps = np.reshape(inputs, [-1, shape[-1]])
             src = np.mean(temps, axis=0), np.std(temps, axis=0)
         else:
             src = np.array(src[0]), np.array(src[1])
