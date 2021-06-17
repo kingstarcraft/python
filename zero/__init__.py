@@ -1,1 +1,1 @@
-from . import function, coordinate, image, torch, box, matrix
+from . import function, coordinate, matrix, box, image, torch

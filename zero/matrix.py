@@ -17,7 +17,8 @@ def split(size, crop, overlap=0):
     if crop is None:
         return [(0, 0, *size)]
     crop = np.minimum(size, crop)
-    if isinstance(overlap, int):
+    overlap = 0 if overlap is None else overlap
+    if isinstance(overlap, int) or isinstance(overlap, float):
         overlap = np.array([overlap for _ in size])
     else:
         overlap = np.array(overlap)
@@ -34,13 +35,14 @@ def split(size, crop, overlap=0):
     return np.concatenate((starts, ends), axis=-1)
 
 
-def crop(image, crop=1024, overlap=0, axis=-3, dim=2, keep=True):
-    rois = np.reshape(split(image.shape[axis:axis + dim], crop, overlap), (-1, 2 * dim))
+def crop(image, crop=1024, overlap=0, start=-3, end=-1, keep=True):
+    dim = abs(start) if end is None else end - start
+    rois = np.reshape(split(image.shape[start:end], crop, overlap), (-1, 2 * dim))
     pathes = []
     for roi in rois:
         slices = [slice(None) for _ in image.shape]
         for n in range(dim):
-            slices[axis + n] = slice(roi[n], roi[n + dim])
+            slices[start + n] = slice(roi[n], roi[n + dim])
         if keep:
             pathes.append((tuple(roi[0:dim]), image[tuple(slices)]))
         else:
