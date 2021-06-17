@@ -9,9 +9,10 @@ class ReinhardNormal:
         self._target = target
 
     def __call__(self, inputs, dst=None, src=None, offset=None):
+        outputs = self._from_color(inputs)
         if src is None:
-            shape = inputs.shape
-            temps = np.reshape(inputs, [-1, shape[-1]])
+            shape = outputs.shape
+            temps = np.reshape(outputs, [-1, shape[-1]])
             src = np.mean(temps, axis=0), np.std(temps, axis=0)
         else:
             src = np.array(src[0]), np.array(src[1])
@@ -19,7 +20,7 @@ class ReinhardNormal:
             src = src[0] + offset[0], src[1] + offset[1]
         if dst is None:
             dst = self._target
-        outputs = self._from_color(inputs)
+        dst = np.array(dst[0]), np.array(dst[1])
         outputs = (outputs - src[0]) / src[1]
         outputs = outputs * dst[1] + dst[0]
         return self._to_color(outputs)
