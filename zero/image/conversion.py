@@ -92,7 +92,7 @@ class LAB2LMS(_Dense):
 
     def __call__(self, inputs):
         output = super(LAB2LMS, self).__call__(inputs)
-        output = np.exp(output)
+        output = np.exp(output.clip(max=255))
         output[output == np.spacing(1)] = 0
         return output
 
