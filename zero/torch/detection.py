@@ -3,28 +3,28 @@ import torch
 import zero
 
 
-class MMDect(torch.nn.Module):
-    def __init__(self, net, threshold=1.0, size=None, overlap=None):
-        super(MMDect, self).__init__()
-        self._net = net
-        self._size = size
+class SlidingWindow(torch.nn.Module):
+    def __init__(self, model, threshold=1.0, window=None, overlap=None):
+        super(SlidingWindow, self).__init__()
+        self._model = model
+        self._window = window
         self._overlap = overlap
         self._threshold = threshold
 
-        for key in dir(net):
+        for key in dir(model):
             if not hasattr(self, key):
-                if hasattr(net, key) and callable(getattr(net, key)):
-                    setattr(self, key, getattr(net, key))
+                if hasattr(model, key) and callable(getattr(model, key)):
+                    setattr(self, key, getattr(model, key))
 
     def __call__(self, img, *args, **kwargs):
         results = []
         for i in img:
-            patches = zero.matrix.crop(i, self._size, self._overlap, start=-2, end=None)
+            patches = zero.matrix.crop(i, self._window, self._overlap, start=-2, end=None)
             result = None
             format_tuple = False
             for (y, x), patch in patches:
                 offset = np.array([x, y, x, y, 0])
-                src = self._net(img=[patch], *args, **kwargs)[0]
+                src = self._model(img=[patch], *args, **kwargs)[0]
                 dst = [s + offset for s in src]
                 if result is None:
                     result = dst
@@ -34,7 +34,7 @@ class MMDect(torch.nn.Module):
                     assert len(result) == len(dst)
                     result = [np.concatenate((result[i], dst[i])) for i in range(len(src))]
                     format_tuple = isinstance(src, tuple)
-            if self._size is not None:
+            if self._window is not None:
                 if isinstance(result, np.ndarray) and result.shape[-1] == 5:
                     result = zero.box.filter_box(result, self._threshold)
                 else:

@@ -1,1 +1,1 @@
-from . import base, init, util, nn, layer, infer, data, net
+from . import base, init, util, nn, layer, detection, data, net
