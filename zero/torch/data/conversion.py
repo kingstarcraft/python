@@ -10,7 +10,7 @@ class _Dense(torch.nn.Linear):
 
     @torch.no_grad()
     def __call__(self, *args, **kwargs):
-        super(_Dense, self).__call__(*args, **kwargs)
+        return super(_Dense, self).__call__(*args, **kwargs)
 
 
 class RGB2LMS(_Dense):
