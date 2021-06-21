@@ -37,23 +37,54 @@ class Denormalize(_Distribution):
         return inputs * self._std + self._mean
 
 
-class ReinhardNormalRGB(_Net):
-    def __init__(self, src, dst):
-        src = (None, None) if src is None else src
-        super(ReinhardNormalRGB, self).__init__(
-            conversion.RGB2LAB(),
-            Normalize(src[0], src[1]),
-            Denormalize(dst[0], dst[1]),
-            conversion.LAB2RGB()
-        )
+# class ReinhardNormalRGB(_Net):
+#     def __init__(self, src, dst):
+#         src = (None, None) if src is None else src
+#         super(ReinhardNormalRGB, self).__init__(
+#             conversion.RGB2LAB(),
+#             Normalize(src[0], src[1]),
+#             Denormalize(dst[0], dst[1]),
+#             conversion.LAB2RGB()
+#         )
+#
+#
+# class ReinhardNormalBGR(_Net):
+#     def __init__(self, src, dst):
+#         src = (None, None) if src is None else src
+#         super(ReinhardNormalBGR, self).__init__(
+#             conversion.BGR2LAB(),
+#             Normalize(src[0], src[1]),
+#             Denormalize(dst[0], dst[1]),
+#             conversion.LAB2BGR()
+#         )
+
+class ReinhardNormal(torch.nn.Module):
+    def __init__(self, from_color, to_color, target=None):
+        super(ReinhardNormal, self).__init__()
+        self._from_color = from_color
+        self._to_color = to_color
+        self._target = target
+
+    def __call__(self, inputs, dst=None, src=None, offset=None):
+        outputs = self._from_color(inputs)
+        if src is None:
+            shape = outputs.shape
+            temps = torch.reshape(outputs, [-1, shape[-1]])
+            src = torch.mean(temps, dim=0), torch.std(temps, dim=0)
+        if offset is not None:
+            src = src[0] + offset[0], src[1] + offset[1]
+        if dst is None:
+            dst = self._target
+        outputs = (outputs - src[0]) / src[1]
+        outputs = outputs * dst[1] + dst[0]
+        return self._to_color(outputs)
 
 
-class ReinhardNormalBGR(_Net):
-    def __init__(self, src, dst):
-        src = (None, None) if src is None else src
-        super(ReinhardNormalBGR, self).__init__(
-            conversion.BGR2LAB(),
-            Normalize(src[0], src[1]),
-            Denormalize(dst[0], dst[1]),
-            conversion.LAB2BGR()
-        )
+class ReinhardNormalBGR(ReinhardNormal):
+    def __init__(self, target=None):
+        super(ReinhardNormalBGR, self).__init__(conversion.BGR2LAB(), conversion.LAB2BGR(), target)
+
+
+class ReinhardNormalRGB(ReinhardNormal):
+    def __init__(self, target=None):
+        super(ReinhardNormalRGB, self).__init__(conversion.RGB2LAB(), conversion.LAB2RGB(), target)
