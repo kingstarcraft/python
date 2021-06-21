@@ -79,7 +79,7 @@ class LAB2LMS(_Dense):
 
     def __call__(self, input):
         output = super(LAB2LMS, self).__call__(input)
-        output = torch.exp(output)
+        output = torch.exp(output.clip(None, 255))
         output[output == numpy.spacing(1)] = 0
         return output
 
