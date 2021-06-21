@@ -8,6 +8,10 @@ class _Dense(torch.nn.Linear):
         super(_Dense, self).__init__(3, 3, False)
         self.weight.data[:] = torch.Tensor(weight)
 
+    @torch.no_grad()
+    def __call__(self, *args, **kwargs):
+        super(_Dense, self).__call__(*args, **kwargs)
+
 
 class RGB2LMS(_Dense):
     def __init__(self):
