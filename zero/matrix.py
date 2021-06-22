@@ -17,11 +17,7 @@ def split(size, crop, overlap=0):
     if crop is None:
         return [(0, 0, *size)]
     crop = np.minimum(size, crop)
-    overlap = 0 if overlap is None else overlap
-    if isinstance(overlap, int) or isinstance(overlap, float):
-        overlap = np.array([overlap for _ in size])
-    else:
-        overlap = np.array(overlap)
+    overlap = 0 if overlap is None else (np.zeros_like(crop) + overlap)
     assert len(crop) == len(size) == len(overlap)
     interval = crop - overlap
     assert not (interval <= 0).any()
