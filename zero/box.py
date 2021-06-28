@@ -35,7 +35,7 @@ def iou(boxes1, boxes2):
     area2 = area_box(boxes2)
     intersect = intersection(boxes1, boxes2)
     union = np.expand_dims(area1, axis=1) + np.expand_dims(area2, axis=0) - intersect
-    return intersect / union
+    return intersect / union.clip(min=1e-10)
 
 
 def ioa(boxes1, boxes2):
@@ -43,7 +43,7 @@ def ioa(boxes1, boxes2):
     area2 = area_box(boxes2)
     intersect = intersection(boxes1, boxes2)
     union = np.minimum(np.expand_dims(area1, axis=1), np.expand_dims(area2, axis=0))
-    return intersect / union
+    return intersect / union.clip(min=1e-10)
 
 
 def filter_box(boxes, overlap=0.9):
