@@ -115,3 +115,20 @@ class LAB2RGB(_Core):
 class LAB2BGR(_Core):
     def __init__(self):
         super(LAB2BGR, self).__init__((LAB2LMS(), LMS2BGR()))
+
+
+class COLOR2OD(object):
+    def __init__(self):
+        pass
+
+    def __call__(self, inputs):
+        outputs = inputs.clip(1)
+        return -1 * np.log(outputs / 255)
+
+
+class OD2COLOR(object):
+    def __init__(self):
+        pass
+
+    def __call__(self, inputs):
+        return (255 * np.exp(-1 * inputs)).astype(np.uint8)
