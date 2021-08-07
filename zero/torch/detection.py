@@ -9,7 +9,7 @@ class SlidingWindow(torch.nn.Module):
         self._model = model
         self._window = window
         self._overlap = overlap
-        self._threshold = threshold
+        self._filter = zero.boxes.Filter(threshold=self._threshold)
 
         for key in dir(model):
             if not hasattr(self, key):
@@ -36,11 +36,11 @@ class SlidingWindow(torch.nn.Module):
                     format_tuple = isinstance(src, tuple)
             if self._window is not None:
                 if isinstance(result, np.ndarray) and result.shape[-1] == 5:
-                    result = zero.box.filter_box(result, self._threshold)
+                    result = self._filter(result)
                 else:
                     for i in range(len(result)):
                         if result[i].shape[-1] == 5:
-                            result[i] = zero.box.filter_box(result[i])
+                            result[i] = self._filter(result[i])
             result = tuple(result) if format_tuple else result
             results.append(result)
         return results
