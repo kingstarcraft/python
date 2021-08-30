@@ -77,7 +77,7 @@ def nms(dets, thresh):
 
 
 class Merge(object):
-    def __init__(self, similarity='iou', threshold=0.5, method='intersection'):
+    def __init__(self, similarity='iou', threshold=0.5, method='union'):
         '''
         :param threshold: [0-1]
         :param method: union/intersection
@@ -110,7 +110,12 @@ class Merge(object):
                     if self._similarity(s, d) > self._threshold:
                         save = False
                         change = True
-                        boxes[j] = self._core(s, d)
+                        merge = self._core(s, d)
+                        if len(boxes[j]) > len(merge):
+                            boxes[j][0:len(merge)] = merge
+                            boxes[j][-1] = max(s[-1], d[-1])
+                        else:
+                            boxes[j] = merge
                 if save:
                     cache.append(s)
             boxes = cache
@@ -118,7 +123,7 @@ class Merge(object):
 
 
 class Filter(object):
-    def __init__(self, similarity='ioa', threshold=0.9):
+    def __init__(self, similarity='ioa', threshold=0.9, priority='score'):
         self._threshold = threshold
         if similarity == 'iou':
             self._similarity = iou
@@ -126,6 +131,7 @@ class Filter(object):
             self._similarity = ioa
         else:
             raise NotImplementedError
+        self._priority = priority
 
     def __call__(self, boxes):
         boxes = np.array(boxes)
@@ -134,12 +140,22 @@ class Filter(object):
         score = boxes.shape[-1] == 5
         a = area(boxes)
         mask = np.ones(len(boxes), dtype='bool')
-        for x, y in zip(*np.where(self._similarity(boxes, boxes) > self._threshold)):
-            if x != y:
-                if a[y] < a[x]:
-                    mask[y] = False
-                elif a[x] == a[y] and score:
-                    mask[x if boxes[x][-1] < boxes[y][-1] else y] = False
-                else:
-                    mask[x] = False
+        if self._priority == 'score':
+            for x, y in zip(*np.where(self._similarity(boxes, boxes) > self._threshold)):
+                if x != y:
+                    if boxes[y][-1] < boxes[x][-1]:
+                        mask[y] = False
+                    elif boxes[x][-1] == boxes[y] and score:
+                        mask[x if a[x] < a[y] else y] = False
+                    else:
+                        mask[x] = False
+        else:
+            for x, y in zip(*np.where(self._similarity(boxes, boxes) > self._threshold)):
+                if x != y:
+                    if a[y] < a[x]:
+                        mask[y] = False
+                    elif a[x] == a[y] and score:
+                        mask[x if boxes[x][-1] < boxes[y][-1] else y] = False
+                    else:
+                        mask[x] = False
         return boxes[mask]
