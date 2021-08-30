@@ -8,7 +8,12 @@ class ReinhardNormal(object):
     def __init__(self, from_color, to_color, target=None):
         self._from_color = from_color
         self._to_color = to_color
-        self._target = target
+        if target is not None and len(target) == 3:
+            target = self._from_color(target)
+            target = np.reshape(target, [-1, target.shape[-1]])
+            self._target = np.mean(target, axis=0), np.std(target, axis=0)
+        else:
+            self._target = target
 
     def __call__(self, inputs, dst=None, src=None, offset=None):
         outputs = self._from_color(inputs)
