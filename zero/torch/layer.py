@@ -118,7 +118,8 @@ class Transformer(torch.nn.Module):
             from_channels, to_channels = channels, channels
         else:
             from_channels, to_channels = channels
-        self._attention = Attention(channels, (attention_headers, attention_channels), query, key, value, attention_dropout,
+        self._attention = Attention(channels, (attention_headers, attention_channels), query, key, value,
+                                    attention_dropout,
                                     initilalizer)
         self._dense = torch.nn.Sequential(
             zero.torch.nn.Dense(attention_headers * attention_channels, from_channels, initilalizer=initilalizer),
@@ -214,3 +215,12 @@ class ASPP(torch.nn.Module):
             aspp.append(block(inputs))
         aspp[0] = functional.interpolate(aspp[0], size=aspp[-1].size()[2:], mode='bilinear', align_corners=True)
         return self._merge(torch.cat(aspp, dim=1))
+
+
+class GradientReversal(torch.nn.Module):
+    def __init__(self, λ=1):
+        super(GradientReversal, self).__init__()
+        self.λ = λ
+
+    def forward(self, x):
+        return util.GradientReversalFunction.apply(x, self.λ)
