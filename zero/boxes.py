@@ -145,7 +145,7 @@ class Filter(object):
                 if x != y:
                     if boxes[y][-1] < boxes[x][-1]:
                         mask[y] = False
-                    elif boxes[x][-1] == boxes[y] and score:
+                    elif boxes[x][-1] == boxes[y][-1] and score:
                         mask[x if a[x] < a[y] else y] = False
                     else:
                         mask[x] = False
