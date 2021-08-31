@@ -14,13 +14,13 @@ class GradientReversalFunction(Function):
     """
 
     @staticmethod
-    def forward(ctx, x, λ):
-        ctx.λ = λ
+    def forward(ctx, x, gamma):
+        ctx.gamma = gamma
         return x.clone()
 
     @staticmethod
     def backward(ctx, grads):
-        λ = ctx.λ
-        λ = grads.new_tensor(λ)
-        dx = -λ * grads
+        gamma = ctx.gamma
+        gamma = grads.new_tensor(gamma)
+        dx = -gamma * grads
         return dx, None

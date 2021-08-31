@@ -218,9 +218,9 @@ class ASPP(torch.nn.Module):
 
 
 class GradientReversal(torch.nn.Module):
-    def __init__(self, λ=1):
+    def __init__(self, gamma=1):
         super(GradientReversal, self).__init__()
-        self.λ = λ
+        self.gamma = gamma
 
     def forward(self, x):
-        return util.GradientReversalFunction.apply(x, self.λ)
+        return util.GradientReversalFunction.apply(x, self.gamma)
