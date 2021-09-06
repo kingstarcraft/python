@@ -50,7 +50,7 @@ def ioa(boxes1, boxes2):
 
 class NMS(object):
     def __init__(self, type='iou', threshold=0.5):
-        self._nms = self.iou if type == 'iou' else self.distance
+        self._nms = self.iou if type == 'iou' else (self.dynamic if threshold is None else self.distance)
         self.threshold = threshold
 
     def iou(self, boxes):
@@ -75,10 +75,35 @@ class NMS(object):
             order = order[index + 1]
         return keep
 
+    def dynamic(self, boxes):
+        x1 = boxes[:, 0]
+        y1 = boxes[:, 1]
+        x2 = boxes[:, 2]
+        y2 = boxes[:, 3]
+        order = boxes[:, 4].argsort()[::-1]
+        center_x = (x1 + x2) / 2
+        center_y = (y1 + y2) / 2
+
+        width = (x2 - x1 + 1)
+        height = (y2 - y1 + 1)
+        size = np.sqrt(width ** 2 + height ** 2) / 2
+        keep = []
+        while order.size > 0:
+            i = order[0]
+            keep.append(i)
+            center_x1 = center_x[i]
+            center_y1 = center_y[i]
+            center_x2 = center_x[order[1:]]
+            center_y2 = center_y[order[1:]]
+            dist = np.sqrt((center_x1 - center_x2) ** 2 + (center_y1 - center_y2) ** 2)
+            distances = np.maximum(size[order[1:]], size[i])
+            index = np.where(dist > distances)[0]
+            order = order[index + 1]
+        return keep
+
     def distance(self, boxes):
         scores = boxes[:, -1]
-
-        if boxes.shape[-1] == 6:
+        if boxes.shape[-1] >= 4:
             center_x = boxes[:, 0] + (boxes[:, 2] - boxes[:, 0]) / 2
             center_y = boxes[:, 1] + (boxes[:, 3] - boxes[:, 1]) / 2
         else:
