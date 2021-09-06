@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn.neighbors import KDTree
 from . import box
 
 
@@ -47,33 +48,59 @@ def ioa(boxes1, boxes2):
     return intersect / union.clip(min=1e-10)
 
 
-def nms(dets, thresh):
-    """
-    nms
-    :param dets: ndarray [x1,y1,x2,y2,score]
-    :param thresh: int
-    :return: list[index]
-    """
-    x1 = dets[:, 0]
-    y1 = dets[:, 1]
-    x2 = dets[:, 2]
-    y2 = dets[:, 3]
-    order = dets[:, 4].argsort()[::-1]
-    area = (x2 - x1 + 1) * (y2 - y1 + 1)
-    keep = []
-    while order.size > 0:
-        i = order[0]
-        keep.append(i)
-        xx1 = np.maximum(x1[i], x1[order[1:]])
-        yy1 = np.maximum(y1[i], y1[order[1:]])
-        xx2 = np.minimum(x2[i], x2[order[1:]])
-        yy2 = np.minimum(y2[i], y2[order[1:]])
-        w = np.maximum(0, xx2 - xx1 + 1)
-        h = np.maximum(0, yy2 - yy1 + 1)
-        over = (w * h) / (area[i] + area[order[1:]] - w * h)
-        index = np.where(over <= thresh)[0]
-        order = order[index + 1]
-    return keep
+class NMS(object):
+    def __init__(self, type='iou', threshold=0.5):
+        self._nms = self.iou if type == 'iou' else self.distance
+        self.threshold = threshold
+
+    def iou(self, boxes):
+        x1 = boxes[:, 0]
+        y1 = boxes[:, 1]
+        x2 = boxes[:, 2]
+        y2 = boxes[:, 3]
+        order = boxes[:, 4].argsort()[::-1]
+        area = (x2 - x1 + 1) * (y2 - y1 + 1)
+        keep = []
+        while order.size > 0:
+            i = order[0]
+            keep.append(i)
+            xx1 = np.maximum(x1[i], x1[order[1:]])
+            yy1 = np.maximum(y1[i], y1[order[1:]])
+            xx2 = np.minimum(x2[i], x2[order[1:]])
+            yy2 = np.minimum(y2[i], y2[order[1:]])
+            w = np.maximum(0, xx2 - xx1 + 1)
+            h = np.maximum(0, yy2 - yy1 + 1)
+            over = (w * h) / (area[i] + area[order[1:]] - w * h)
+            index = np.where(over <= self.threshold)[0]
+            order = order[index + 1]
+        return keep
+
+    def distance(self, boxes):
+        scores = boxes[:, -1]
+
+        if boxes.shape[-1] == 6:
+            center_x = boxes[:, 0] + (boxes[:, 2] - boxes[:, 0]) / 2
+            center_y = boxes[:, 1] + (boxes[:, 3] - boxes[:, 1]) / 2
+        else:
+            center_x = boxes[:, 0]
+            center_y = boxes[:, 1]
+
+        X = np.dstack((center_x, center_y))[0]
+        tree = KDTree(X)
+
+        sorted_ids = np.argsort(scores)[::-1]
+
+        ids_to_keep = []
+        ind = tree.query_radius(X, r=self.threshold)
+
+        while len(sorted_ids) > 0:
+            ids = sorted_ids[0]
+            ids_to_keep.append(ids)
+            sorted_ids = np.delete(sorted_ids, np.in1d(sorted_ids, ind[ids]).nonzero()[0])
+        return boxes[ids_to_keep]
+
+    def __call__(self, boxes):
+        return self._nms(boxes)
 
 
 class Merge(object):
