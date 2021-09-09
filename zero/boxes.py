@@ -73,7 +73,7 @@ class NMS(object):
             over = (w * h) / (area[i] + area[order[1:]] - w * h)
             index = np.where(over <= self.threshold)[0]
             order = order[index + 1]
-        return keep
+        return boxes[keep]
 
     def dynamic(self, boxes):
         x1 = boxes[:, 0]
@@ -99,7 +99,7 @@ class NMS(object):
             distances = np.maximum(size[order[1:]], size[i])
             index = np.where(dist > distances)[0]
             order = order[index + 1]
-        return keep
+        return boxes[keep]
 
     def distance(self, boxes):
         scores = boxes[:, -1]
