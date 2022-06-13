@@ -3,7 +3,10 @@ class Argument(dict):
         super(Argument, self).__init__()
 
         names = func.__code__.co_varnames[0:func.__code__.co_argcount]
-        core = dict(zip(names[::-1], func.__defaults__[::-1]))
+        if func.__defaults__ is None:
+            core = {}
+        else:
+            core = dict(zip(names[::-1], func.__defaults__[::-1]))
 
         for id, name in enumerate(names):
             if id < len(args):
