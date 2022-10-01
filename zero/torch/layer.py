@@ -256,6 +256,7 @@ class SpectralNorm(torch.nn.Module):
     def _made_params(self):
         try:
             u = getattr(self.module, self.name + "_u")
+
             v = getattr(self.module, self.name + "_v")
             w = getattr(self.module, self.name + "_bar")
             return True
@@ -268,11 +269,11 @@ class SpectralNorm(torch.nn.Module):
         height = w.data.shape[0]
         width = w.view(height, -1).data.shape[1]
 
-        u = Parameter(w.data.new(height).normal_(0, 1), requires_grad=False)
-        v = Parameter(w.data.new(width).normal_(0, 1), requires_grad=False)
+        u = torch.nn.Parameter(w.data.new(height).normal_(0, 1), requires_grad=False)
+        v = torch.nn.Parameter(w.data.new(width).normal_(0, 1), requires_grad=False)
         u.data = l2normalize(u.data)
         v.data = l2normalize(v.data)
-        w_bar = Parameter(w.data)
+        w_bar = torch.nn.Parameter(w.data)
 
         del self.module._parameters[self.name]
 
