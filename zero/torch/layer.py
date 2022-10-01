@@ -281,6 +281,6 @@ class SpectralNorm(torch.nn.Module):
         self.module.register_parameter(self.name + "_v", v)
         self.module.register_parameter(self.name + "_bar", w_bar)
 
-    def forward(self, *args):
+    def forward(self, *args, **kwargs):
         self._update_u_v()
-        return self.module.forward(*args)
+        return self.module.forward(*args, **kwargs)
