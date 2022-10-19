@@ -284,3 +284,92 @@ class SpectralNorm(torch.nn.Module):
     def forward(self, *args, **kwargs):
         self._update_u_v()
         return self.module.forward(*args, **kwargs)
+
+
+class GradientX(torch.nn.Module):
+    def __init__(self, reverse=False, pad=True):
+        super(GradientX, self).__init__()
+        self._core = torch.nn.Conv2d(kernel_size=(1, 2), in_channels=1, out_channels=1, bias=False)
+        self._core.weight.data[:] = torch.Tensor([[[[1, -1]]]]) if reverse else torch.Tensor([[[[-1, 1]]]])
+        self._pad = pad
+
+    @torch.no_grad()
+    def forward(self, tensor: torch.Tensor):
+        n, c, h, w = tensor.shape
+        if self._pad:
+            pad = torch.zeros(n, c, h, w + 2, dtype=tensor.dtype, device=tensor.device)
+            pad[..., :, 1:-1] = tensor
+            pad[..., :, 0] = pad[..., :, 1]
+            pad[..., :, w + 1] = pad[..., :, w]
+        else:
+            pad = tensor
+        n, c, h, w = pad.shape
+        gradient = self._core(pad.reshape(n * c, 1, h, w))
+        return gradient.reshape([n, c, h, w - 1])
+
+
+class GradientY(torch.nn.Module):
+    def __init__(self, reverse=False, pad=True):
+        super(GradientY, self).__init__()
+        self._core = torch.nn.Conv2d(kernel_size=(2, 1), in_channels=1, out_channels=1, bias=False)
+        self._core.weight.data[:] = torch.Tensor([[[1], [-1]]]) if reverse else torch.Tensor([[[-1], [1]]])
+        self._pad = pad
+
+    @torch.no_grad()
+    def forward(self, tensor: torch.Tensor):
+        n, c, h, w = tensor.shape
+        if self._pad:
+            pad = torch.zeros(n, c, h + 2, w, dtype=tensor.dtype, device=tensor.device)
+            pad[..., 1:-1, :] = tensor
+            pad[..., 0, :] = pad[..., 1, :]
+            pad[..., h + 1, :] = pad[..., h, :]
+        else:
+            pad = tensor
+        n, c, h, w = pad.shape
+        gradient = self._core(pad.reshape(n * c, 1, h, w))
+        return gradient.reshape([n, c, h - 1, w])
+
+
+class GradientXOY(torch.nn.Module):
+    def __init__(self, pad=False):
+        super(GradientXOY, self).__init__()
+        self._grad_y = GradientY(pad=pad)
+        self._grad_x = GradientX(pad=pad)
+
+    @torch.no_grad()
+    def forward(self, inputs):
+        if isinstance(inputs, (list, tuple)):
+            assert len(inputs) == 2
+            return self._grad_y(inputs[0]), self._grad_x(inputs[1])
+        else:
+            grad_y = self._grad_y(inputs)
+            grad_x = self._grad_x(inputs)
+            return [grad_y, grad_x]
+
+
+class Laplacian(torch.nn.Module):
+    def __init__(self, alpha=4, pad=True):
+        super(Laplacian, self).__init__()
+        self._core = torch.nn.Conv2d(kernel_size=(3, 3), in_channels=1, out_channels=1, bias=False)
+        if alpha == 4:
+            self._core.weight.data[:] = torch.Tensor([0, 1, 0, 1, -4, 1, 0, 1, 0]).reshape([1, 1, 3, 3])
+        elif alpha == 8:
+            self._core.weight.data[:] = torch.Tensor([1, 1, 1, 1, -8, 1, 1, 1, 1]).reshape([1, 1, 3, 3])
+        self._pad = pad
+
+    @torch.no_grad()
+    def forward(self, tensor):
+        n, c, h, w = tensor.shape
+        if self._pad:
+            pad = torch.zeros(n, c, h + 2, w + 2, dtype=tensor.dtype, device=tensor.device)
+            pad[..., 1:-1, 1:-1] = tensor
+
+            pad[..., 0, :] = pad[..., 1, :]
+            pad[..., h + 1, :] = pad[..., h, :]
+
+            pad[..., :, 0] = pad[..., :, 1]
+            pad[..., :, w + 1] = pad[..., :, w]
+        else:
+            pad = tensor
+        n, c, h, w = pad.shape
+        return self._core(pad.reshape([n * c, 1, h, w])).reshape((n, c, h - 2, w - 2))

@@ -1,1 +1,1 @@
-from . import ntm, swin
+from . import ntm, swin, quality
