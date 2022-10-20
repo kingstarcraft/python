@@ -15,7 +15,7 @@ def metric(s, t, probabilty, method):
 
 
 def solve(start, end, alpha, probabilty=stats.gaussian.ggd, method=stats.metric.hellinger):
-    def core(start, end):
+    def core(start, end, alpha):
         d = metric(start, end, probabilty, method)
 
         def loss(param):
@@ -30,9 +30,11 @@ def solve(start, end, alpha, probabilty=stats.gaussian.ggd, method=stats.metric.
     shape = start.shape
     start = start.reshape([-1, shape[-1]])
     end = end.reshape([-1, shape[-1]])
+    if isinstance(alpha, (int, float)):
+        alpha = [alpha for _ in range(len(start))]
     root = []
     for i in range(len(start)):
-        root.append(core(start[i], end[i]))
+        root.append(core(start[i], end[i], alpha[i]))
     root = np.stack(root, 0)
     return root.reshape(shape)
 
