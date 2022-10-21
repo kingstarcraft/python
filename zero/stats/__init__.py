@@ -1,1 +1,1 @@
-from . import metric, gaussian
+from . import metric, gaussian, sample

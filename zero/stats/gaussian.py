@@ -2,21 +2,6 @@ import numpy as np
 import scipy.special
 
 
-class Uniform:
-    def __init__(self, param):
-        super(Uniform, self).__init__()
-        if isinstance(param, (tuple, list)):
-            assert len(param) == 2
-            self._min = np.minimum(*param)
-            self._max = np.maximum(*param)
-        else:
-            self._min = np.minimum(-param, param)
-            self._max = np.maximum(-param, param)
-
-    def __call__(self):
-        return np.random.uniform(self._min, self._max)
-
-
 def ses(x, a, b, c):
     if len(x.shape) <= 1:
         t = x ** 2
