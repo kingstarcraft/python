@@ -11,7 +11,7 @@ def possion(laplacian, mean=None):
         torch.arange(shape[0], device=laplacian.device),
         torch.arange(shape[1], device=laplacian.device),
     )
-    u = f / (2 * (torch.cos(torch.pi * ky / (shape[0] + 2)) + torch.cos(torch.pi * kx / (shape[-1] + 2)) - 2))
+    u = f / (2 * (torch.cos(np.pi * ky / (shape[0] + 2)) + torch.cos(np.pi * kx / (shape[-1] + 2)) - 2))
     u[..., 0, 0] = 0
     reconst = torch_dct.idct_2d(u, 'ortho')
     if mean is None:
