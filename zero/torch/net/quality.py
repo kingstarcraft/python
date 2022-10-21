@@ -32,6 +32,8 @@ def solve(start, end, alpha, probabilty=stats.gaussian.ggd, method=stats.metric.
     end = end.reshape([-1, shape[-1]])
     if isinstance(alpha, (int, float)):
         alpha = [alpha for _ in range(len(start))]
+    elif len(shape) >= 3:
+        alpha = np.repeat(np.expand_dims(alpha, axis=-1), shape[-2], axis=-1).reshape([-1])
     root = []
     for i in range(len(start)):
         root.append(core(start[i], end[i], alpha[i]))
