@@ -47,8 +47,8 @@ class Mapper(torch.nn.Module):
 
     def forward(self, inputs, source, target):
         const = np.log(
-            stats.gaussian.constraint(target[:, 0], target[:, 1]) /
-            stats.gaussian.constraint(source[:, 0], source[:, 1])
+            stats.gaussian.constraint(target[..., 0], target[..., 1]) /
+            stats.gaussian.constraint(source[..., 0], source[..., 1])
         )
 
         if isinstance(inputs, (list, tuple)):
