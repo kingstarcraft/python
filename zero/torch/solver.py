@@ -10,7 +10,6 @@ def possion(laplacian, mean=None):
     ky, kx = torch.meshgrid(
         torch.arange(shape[0], device=laplacian.device),
         torch.arange(shape[1], device=laplacian.device),
-        indexing='ij'
     )
     u = f / (2 * (torch.cos(torch.pi * ky / (shape[0] + 2)) + torch.cos(torch.pi * kx / (shape[-1] + 2)) - 2))
     u[..., 0, 0] = 0
