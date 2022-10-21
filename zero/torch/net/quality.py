@@ -55,9 +55,9 @@ class Mapper(torch.nn.Module):
             device, dtype = inputs[0].device, inputs[0].dtype
         else:
             device, dtype = inputs.device, inputs.dtype
-        source = torch.tensor(source, dtype=dtype, device=device)
-        target = torch.tensor(target, dtype=dtype, device=device)
-        const = torch.tensor(const, dtype=dtype, device=device)
+        source = torch.tensor(source, dtype=dtype, device=device)[..., None, None, :, :]
+        target = torch.tensor(target, dtype=dtype, device=device)[..., None, None, :, :]
+        const = torch.tensor(const, dtype=dtype, device=device)[..., None, None, :]
 
         if isinstance(inputs, (list, tuple)):
             return type(inputs)([self.core(_, source, target, const) for _ in inputs])
@@ -67,8 +67,8 @@ class Mapper(torch.nn.Module):
         sign = torch.sign(tensor)
         if len(tensor.shape) == 4:
             tensor = tensor.permute((0, 2, 3, 1))
-        sa, sb = source[:, 0], source[:, 1]
-        ta, tb = target[:, 0], target[:, 1]
+        sa, sb = source[..., 0], source[..., 1]
+        ta, tb = target[..., 0], target[..., 1]
 
         outputs = sa * torch.pow(torch.abs(tensor), sb) + const
         outputs = torch.pow(outputs.clip(0) / ta, 1 / tb)
