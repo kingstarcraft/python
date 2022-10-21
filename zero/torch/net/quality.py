@@ -66,7 +66,7 @@ class Mapper(torch.nn.Module):
     def _core(self, tensor, source, target, const):
         sign = torch.sign(tensor)
         if len(tensor.shape) == 4:
-            tensor = torch.permute(tensor, (0, 2, 3, 1))
+            tensor = tensor.permute((0, 2, 3, 1))
         sa, sb = source[:, 0], source[:, 1]
         ta, tb = target[:, 0], target[:, 1]
 
@@ -74,7 +74,7 @@ class Mapper(torch.nn.Module):
         outputs = torch.pow(outputs.clip(0) / ta, 1 / tb)
 
         if len(tensor.shape) == 4:
-            outputs = torch.permute(outputs, (0, 3, 1, 2))
+            outputs = outputs.permute(0, 3, 1, 2)
         return sign * outputs
 
 
