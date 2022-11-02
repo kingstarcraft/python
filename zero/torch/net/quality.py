@@ -23,7 +23,7 @@ def solve(start, end, alpha, probabilty=stats.gaussian.ggd, method=stats.metric.
             e = metric(end, param, probabilty=probabilty, method=method)
             return s - alpha * d, s + e - d
 
-        return fsolve(loss, (start + end) / 2)
+        return fsolve(loss, start * (1 - alpha) + alpha * end)
 
     assert start.shape == end.shape
 
@@ -60,7 +60,7 @@ class Mapper(torch.nn.Module):
         const = torch.tensor(const, dtype=dtype, device=device)[..., None, None, :]
 
         if isinstance(inputs, (list, tuple)):
-            return type(inputs)([self.core(_, source, target, const) for _ in inputs])
+            return type(inputs)([self._core(_, source, target, const) for _ in inputs])
         return self._core(inputs, source, target, const)
 
     def _core(self, tensor, source, target, const):
@@ -87,13 +87,25 @@ class Transform(torch.nn.Module):
         self._gradient_fx = layer.GradientX(pad=False)
         self._gradient_fy = layer.GradientY(pad=False)
 
-    def forward(self, tensor, source, tagret, const=None):
+    def forward(self, tensor, source, target, const=None):
         if const is None:
             const = tensor.mean(dim=(-2, -1))
-        tx = self._gradient_tx(tensor)
+
         ty = self._gradient_ty(tensor)
-        mx = self._mapper(tx, source, tagret)
-        my = self._mapper(ty, source, tagret)
-        fx = self._gradient_fx(mx)
+        tx = self._gradient_tx(tensor)
+
+        if source.shape[-2] == 2:
+            source_y, source_x = source[..., 0, :], source[..., 1, :]
+            target_y, target_x = target[..., 0, :], target[..., 1, :]
+        elif source.shape[-2] == 1:
+            source_y, source_x = source[..., 0, :], source[..., 0, :]
+            target_y, target_x = target[..., 0, :], target[..., 0, :]
+        else:
+            raise RuntimeError
+
+        my = self._mapper(ty, source_y, target_y)
+        mx = self._mapper(tx, source_x, target_x)
+
         fy = self._gradient_fy(my)
+        fx = self._gradient_fx(mx)
         return solver.possion(fx + fy, const)

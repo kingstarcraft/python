@@ -1,5 +1,6 @@
 import random
 import numpy as np
+import scipy.fft
 
 
 def ransac(model, critic, dataset, sample, probablity=0.999):
@@ -28,7 +29,7 @@ def ransac(model, critic, dataset, sample, probablity=0.999):
                 s, mask = value
                 if s < score:
                     score = s
-                    iters = numerator / np.log(1 - (np.sum(mask) * denominator)**sample + 1e-16)
+                    iters = numerator / np.log(1 - (np.sum(mask) * denominator) ** sample + 1e-16)
                     best = solution, mask
         iter += 1
     return best
