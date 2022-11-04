@@ -1,44 +1,8 @@
 import numpy as np
-from scipy.optimize import fsolve
-
 import torch
 
 from zero import stats
 from .. import layer, solver
-
-
-def metric(s, t, probabilty, method):
-    x = np.linspace(-255, 255, 511, endpoint=True)
-    p = probabilty(x, *s)
-    q = probabilty(x, *t)
-    return method(p, q)
-
-
-def solve(start, end, alpha, probabilty=stats.gaussian.ggd, method=stats.metric.hellinger):
-    def core(start, end, alpha):
-        d = metric(start, end, probabilty, method)
-
-        def loss(param):
-            s = metric(start, param, probabilty=probabilty, method=method)
-            e = metric(end, param, probabilty=probabilty, method=method)
-            return s - alpha * d, s + e - d
-
-        return fsolve(loss, start * (1 - alpha) + alpha * end)
-
-    assert start.shape == end.shape
-
-    shape = start.shape
-    start = start.reshape([-1, shape[-1]])
-    end = end.reshape([-1, shape[-1]])
-    if isinstance(alpha, (int, float)):
-        alpha = [alpha for _ in range(len(start))]
-    elif len(shape) >= 3:
-        alpha = np.repeat(np.expand_dims(alpha, axis=-1), shape[-2], axis=-1).reshape([-1])
-    root = []
-    for i in range(len(start)):
-        root.append(core(start[i], end[i], alpha[i]))
-    root = np.stack(root, 0)
-    return root.reshape(shape)
 
 
 class Mapper(torch.nn.Module):
