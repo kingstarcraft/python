@@ -40,6 +40,9 @@ def _pad_y(image):
 
 
 def transform(image, source, target, const=None):
+    if const is None:
+        const = image.mean(axis=(0, 1))
+
     ty = np.diff(_pad_y(image).astype('int32'), axis=0)
     tx = np.diff(_pad_x(image).astype('int32'), axis=1)
 
