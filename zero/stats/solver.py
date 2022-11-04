@@ -11,12 +11,12 @@ def solve(start, end, alpha, probabilty=gaussian.ggd, method=metric.hellinger):
         def loss(param):
             s = metric.distance(start, param, probabilty=probabilty, method=method)
             e = metric.distance(end, param, probabilty=probabilty, method=method)
-            return (s - alpha * d)**2 + (s + e - d)**2
+            return (s - alpha * d) ** 2 + (s + e - d) ** 2
 
         return scipy.optimize.minimize(
             loss, start * (1 - alpha) + alpha * end,
             bounds=[[
-                np.minimum(start[i], end[i]), np.maximum(start[i], end[i])
+                np.minimum(start[i], end[i]) - 0.01, np.maximum(start[i], end[i]) + 0.01
             ] for i in range(len(start))]
         )
 
