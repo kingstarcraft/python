@@ -11,12 +11,13 @@ def ses(x, a, b, c):
 
 
 def constraint(a, b):
-    b = 1 / np.maximum(b, 1e-10)
+    b = 1 / np.maximum(b, 1e-5)
     return np.maximum(a, 0) ** b / scipy.special.gamma(1 + b) / 2
 
 
 def ggd(x, a, b):
     # c = a ** (1 / b) / scipy.special.gamma(1 + 1 / b) / 2
+    b = np.maximum(b, 0)
     c = constraint(a, b)
     if len(x.shape) <= 1:
         return c * np.exp(-a * np.abs(x) ** b)
