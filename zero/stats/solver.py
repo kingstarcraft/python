@@ -1,3 +1,4 @@
+import numpy as np
 from scipy.optimize import fsolve
 
 from . import metric, gaussian
