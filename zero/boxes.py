@@ -49,9 +49,10 @@ def ioa(boxes1, boxes2):
 
 
 class NMS(object):
-    def __init__(self, type='iou', threshold=0.5):
+    def __init__(self, type='iou', threshold=0.5, index=False):
         self._nms = self.iou if type == 'iou' else (self.dynamic if threshold is None else self.distance)
         self.threshold = threshold
+        self._index = index
 
     def iou(self, boxes):
         x1 = boxes[:, 0]
@@ -73,7 +74,10 @@ class NMS(object):
             over = (w * h) / (area[i] + area[order[1:]] - w * h)
             index = np.where(over <= self.threshold)[0]
             order = order[index + 1]
-        return boxes[keep]
+        if self._index:
+            return keep
+        else:
+            return boxes[keep]
 
     def dynamic(self, boxes):
         x1 = boxes[:, 0]
@@ -99,7 +103,10 @@ class NMS(object):
             distances = np.maximum(size[order[1:]], size[i])
             index = np.where(dist > distances)[0]
             order = order[index + 1]
-        return boxes[keep]
+        if self._index:
+            return keep
+        else:
+            return boxes[keep]
 
     def distance(self, boxes):
         scores = boxes[:, -1]
@@ -115,14 +122,17 @@ class NMS(object):
 
         sorted_ids = np.argsort(scores)[::-1]
 
-        ids_to_keep = []
+        keep = []
         ind = tree.query_radius(X, r=self.threshold)
 
         while len(sorted_ids) > 0:
             ids = sorted_ids[0]
-            ids_to_keep.append(ids)
+            keep.append(ids)
             sorted_ids = np.delete(sorted_ids, np.in1d(sorted_ids, ind[ids]).nonzero()[0])
-        return boxes[ids_to_keep]
+        if self._index:
+            return keep
+        else:
+            return boxes[keep]
 
     def __call__(self, boxes):
         return self._nms(boxes)
