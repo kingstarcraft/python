@@ -39,7 +39,8 @@ class Normal(object):
         return stain, concentrations
 
     def merge(self, stain, concentrations):
-        return self._to(self.dilute(concentrations, stain))
+        images = self._to(self.dilute(concentrations, stain))
+        return images[..., [2, 1, 0]] if self._reverse else images
 
     def stain(self, images, reuse=False):
         images = images[..., [2, 1, 0]] if self._reverse else images

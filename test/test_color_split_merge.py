@@ -7,8 +7,8 @@ dst_input = 'F:/33333/194.png'
 
 src = cv2.imread(src_input)
 dst = cv2.imread(dst_input)
-normalizer = zero.image.normalizer.VahadaneNormalBGR()
-real = cv2.imread('F:/33333/original-vahadane-001-194.png')
+normalizer = zero.image.normalizer.MacenkoNormalBGR()
+real = cv2.imread('F:/33333/original-macenko-001-194.png')
 
 src_stain, src_concentration = normalizer.split(src)
 dst_stain, dst_concentration = normalizer.split(dst)
