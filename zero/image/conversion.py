@@ -131,4 +131,20 @@ class OD2COLOR(object):
         pass
 
     def __call__(self, inputs):
-        return (255 * np.exp(-1 * inputs)).astype(np.uint8)
+        return 255 * np.exp(-1 * inputs)
+
+#   class COLOR2OD(object):
+#       def __init__(self, value=256):
+#           self.value = value
+#
+#       def __call__(self, inputs):
+#           return -1 * np.log((inputs + 1) / self.value)
+#
+#
+#   class OD2COLOR(object):
+#       def __init__(self, value=256):
+#           self.value = value
+#
+#       def __call__(self, inputs):
+#           return self.value * np.exp(-1 * inputs) - 1
+#
