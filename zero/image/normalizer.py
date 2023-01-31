@@ -33,9 +33,13 @@ class Normal(object):
         return images[..., [2, 1, 0]] if self._reverse else images
 
     def split(self, images):
-        images, params = self.stain(images, True)
-        concentrations = self.concentrate(images, params)
-        return params, concentrations
+        shape = images.shape
+        images, stain = self.stain(images, True)
+        concentrations = self.concentrate(images, stain).reshape(list(shape[:-1]) + [-1])
+        return stain, concentrations
+
+    def merge(self, stain, concentrations):
+        return self._to(self.dilute(concentrations, stain))
 
     def stain(self, images, reuse=False):
         images = images[..., [2, 1, 0]] if self._reverse else images
